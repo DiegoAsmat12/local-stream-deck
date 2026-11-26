@@ -8,6 +8,10 @@ import time # STAP antes de borrar algo
 from obs_client_manager import obs_manager
 
 
+from fastapi import APIRouter, BackgroundTasks
+
+router = APIRouter(prefix="/actions", tags=["Actions"])
+
 CINEMA_SCENE = "FX_CINEMA"
 CINEMA_IMAGE = "CINEMA_SOURCE"
 FILTER_NAME = "FADE_OPACITY"
@@ -94,6 +98,12 @@ def run_absolute_cinema():
 
     # Disconnect
     obs_manager.disconnect()
+
+
+@router.post("/cinema")
+def trigger_cinema(background_tasks: BackgroundTasks):
+    background_tasks.add_task(run_absolute_cinema)
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":

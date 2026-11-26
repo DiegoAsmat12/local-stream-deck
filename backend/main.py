@@ -7,7 +7,10 @@ from actions import actions_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    obs_manager.connect()
+    try:
+        obs_manager.connect()
+    except Exception as ex:
+        print(f"⚠️ OBS not ready on startup (will auto-connect on first action): {ex}")
     yield
     obs_manager.disconnect()
 

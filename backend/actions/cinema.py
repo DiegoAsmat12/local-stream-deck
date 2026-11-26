@@ -26,6 +26,8 @@ message_counter = 0
 state_lock = threading.Lock()
 cinema_lock = threading.Lock()
 
+toggle_on_off = True # If True on else off
+
 class MessageRequestBody(BaseModel):
     user: str
     userId: str

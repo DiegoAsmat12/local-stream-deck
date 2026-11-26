@@ -21,7 +21,7 @@ FADE_FPS = 40 # 40FPS
 DEFAULT_TRANSITION_DURATION = 300
 
 TIMER_WAITING = 30 # Seconds
-MESSAGE_COUNT = 2
+MESSAGE_COUNT = 1
 message_counter = 0
 state_lock = threading.Lock()
 cinema_lock = threading.Lock()

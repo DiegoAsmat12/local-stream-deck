@@ -1,15 +1,11 @@
 
-## BOILERPLATE PORQUE NO SE PYTHON
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
 import time # STAP antes de borrar algo
 from obs_client_manager import obs_manager
 
 
 from fastapi import APIRouter, BackgroundTasks
-
+from pydantic import BaseModel
+import threading
 router = APIRouter(prefix="/actions", tags=["Actions"])
 
 CINEMA_SCENE = "FX_CINEMA"
@@ -23,6 +19,18 @@ FADE_OUT_MS = 3141 # PI?!?!
 FADE_FPS = 40 # 40FPS
 
 DEFAULT_TRANSITION_DURATION = 300
+
+TIMER_WAITING = 30 # Seconds
+MESSAGE_COUNT = 2
+message_counter = 0
+state_lock = threading.Lock()
+cinema_lock = threading.Lock()
+
+class MessageRequestBody(BaseModel):
+    user: str
+    userId: str
+    message: str
+
 
 # Duration in MS
 def _fade_opacity(source_name: str, start:float , end:float, duration: int): 
@@ -46,6 +54,7 @@ def _fade_opacity(source_name: str, start:float , end:float, duration: int):
 
         if i < steps:
             time.sleep(delay)
+
 
 
 def run_absolute_cinema():
@@ -73,9 +82,37 @@ def run_absolute_cinema():
             client.remove_scene_item(scene_name=current_scene, item_id=id)
 
 
+def process_cinema_message(message: str):
+    global message_counter
+
+    if cinema_lock.locked(): # Evita el aumento del counter
+        return
+
+    should_trigger = False
+
+    with state_lock:
+        if "cinema" in message.lower():
+            message_counter += 1
+
+            if message_counter >= MESSAGE_COUNT:
+                message_counter = 0
+                should_trigger = True
+
+    if should_trigger and cinema_lock.acquire(blocking=False):
+        try:
+            run_absolute_cinema()
+            time.sleep(TIMER_WAITING)
+        finally:
+            cinema_lock.release()
+
+
+
+
+
 @router.post("/cinema")
-def trigger_cinema(background_tasks: BackgroundTasks):
-    background_tasks.add_task(run_absolute_cinema)
+def trigger_cinema(background_tasks: BackgroundTasks, messageRequestBody: MessageRequestBody):
+    background_tasks.add_task(process_cinema_message, messageRequestBody.message)
+
     return {"status": "ok"}
 
 

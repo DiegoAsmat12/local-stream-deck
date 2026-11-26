@@ -61,8 +61,11 @@ if __name__ == "__main__":
 
 
     name = scene.scene_name
+    item_list = client.get_scene_item_list(name)
 
-    print("Scene is: " + str([s['sceneName'] for s in client.get_scene_list().scenes]))
+    print("Scene is: " + str([s['sourceName'] for s in item_list.scene_items]))
+
+    obs_manager.disconnect()
 
     ## COMO MIERCOLES LLEGAMOS A LAS SCENES de VERTICAL
 
